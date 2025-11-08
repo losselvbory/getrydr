@@ -1,99 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Roblox Game Active Checker</title>
     <style>
         body {
-            background: #131722;
             font-family: Arial;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            padding: 40px;
+            background: #111;
+            color: #fff;
         }
-        .box {
-            background: #1f2633;
-            padding: 25px;
-            border-radius: 10px;
+        input {
             width: 350px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(0,0,0,0.4);
-        }
-        input, button {
-            width: 90%;
             padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: none;
-            font-size: 15px;
+            font-size: 16px;
         }
         button {
-            background: #347cff;
-            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
-            background: #1a63ff;
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
         }
-        #result { font-size: 18px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Roblox Game Active Checker</h2>
+<h1>Roblox Game Active Checker</h1>
 
-    <input id="placeId" value="125825324471106" placeholder="Place ID">
+<input id="gameId" placeholder="Enter Game ID" value="125825324471106">
+<button onclick="checkGame()">Check</button>
 
-    <button onclick="checkGame()">Check Activity</button>
-
-    <div id="result"></div>
-</div>
+<div id="status"></div>
 
 <script>
-async function corsFetch(url) {
-    // AllOrigins CORS Proxy
-    const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
-    const response = await fetch(proxy);
-    const data = await response.json();
-    return JSON.parse(data.contents);
-}
+function checkGame() {
+    const id = document.getElementById("gameId").value;
+    const output = document.getElementById("status");
 
-async function getUniverseId(placeId) {
-    const url = `https://apis.roblox.com/universes/v1/places/${placeId}/universe`;
-    return await corsFetch(url);
-}
+    output.innerHTML = "Checking...";
 
-async function getGameInfo(universeId) {
-    const url = `https://games.roblox.com/v1/games?universeIds=${universeId}`;
-    return await corsFetch(url);
-}
+    // ✅ Public CORS proxy that works with Roblox API
+    const proxy = "https://thingproxy.freeboard.io/fetch/";
 
-async function checkGame() {
-    const placeId = document.getElementById("placeId").value;
-    const resultBox = document.getElementById("result");
+    const url = proxy + "https://games.roblox.com/v1/games?universeIds=" + id;
 
-    resultBox.innerHTML = "Checking...";
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const game = data.data[0];
+            const playing = game.playing;
 
-    try {
-        const uni = await getUniverseId(placeId);
-        const universeId = uni.universeId;
-
-        const infoData = await getGameInfo(universeId);
-        const game = infoData.data[0];
-        const playing = game.playing || 0;
-
-        if (playing > 0) {
-            resultBox.innerHTML = `<span style="color:#4cff4c;">✅ ACTIVE — ${playing} players</span>`;
-        } else {
-            resultBox.innerHTML = `<span style="color:#ff4444;">❌ Not active — 0 players</span>`;
-        }
-    } catch (err) {
-        resultBox.innerHTML = `<span style="color:yellow;">Error: ${err}</span>`;
-    }
+            output.innerHTML = `
+                ✅ <b>${game.name}</b><br>
+                👥 Players: <b>${playing}</b><br>
+                🟢 Status: ${playing > 0 ? "ACTIVE" : "NO PLAYERS"}
+            `;
+        })
+        .catch(err => {
+            output.innerHTML = "❌ Error: " + err;
+        });
 }
 </script>
 
