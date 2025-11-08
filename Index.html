@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Game Active Checker</title>
+    <style>
+        body {
+            background: #131722;
+            font-family: Arial;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .box {
+            background: #1f2633;
+            padding: 25px;
+            border-radius: 10px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            font-size: 15px;
+        }
+        button {
+            background: #347cff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1a63ff;
+        }
+        #result { font-size: 18px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Roblox Game Active Checker</h2>
+
+    <input id="placeId" value="125825324471106" placeholder="Place ID">
+
+    <button onclick="checkGame()">Check Activity</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+async function corsFetch(url) {
+    // AllOrigins CORS Proxy
+    const proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    const response = await fetch(proxy);
+    const data = await response.json();
+    return JSON.parse(data.contents);
+}
+
+async function getUniverseId(placeId) {
+    const url = `https://apis.roblox.com/universes/v1/places/${placeId}/universe`;
+    return await corsFetch(url);
+}
+
+async function getGameInfo(universeId) {
+    const url = `https://games.roblox.com/v1/games?universeIds=${universeId}`;
+    return await corsFetch(url);
+}
+
+async function checkGame() {
+    const placeId = document.getElementById("placeId").value;
+    const resultBox = document.getElementById("result");
+
+    resultBox.innerHTML = "Checking...";
+
+    try {
+        const uni = await getUniverseId(placeId);
+        const universeId = uni.universeId;
+
+        const infoData = await getGameInfo(universeId);
+        const game = infoData.data[0];
+        const playing = game.playing || 0;
+
+        if (playing > 0) {
+            resultBox.innerHTML = `<span style="color:#4cff4c;">✅ ACTIVE — ${playing} players</span>`;
+        } else {
+            resultBox.innerHTML = `<span style="color:#ff4444;">❌ Not active — 0 players</span>`;
+        }
+    } catch (err) {
+        resultBox.innerHTML = `<span style="color:yellow;">Error: ${err}</span>`;
+    }
+}
+</script>
+
+</body>
+</html>
